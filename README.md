@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # Goodfood — food delivery
 
 Food delivery demo with an ASP.NET Core Web API, MySQL, JWT role-based access, Razorpay test checkout, and an Angular storefront.
@@ -299,7 +299,3 @@ The main objective of this project is to develop a full-stack food ordering plat
 - GitHub: [NIPUNYADAV1](https://github.com/NIPUNYADAV1)
 - LinkedIn: [Nipun Kumar](https://linkedin.com/in/nipun-kumar-60232233b/)
 
----
-
-⭐ If you find this project useful, consider giving it a star!
->>>>>>> 1f8807acdbb1b31c9246b9436d1e66af4cbd4fb1
