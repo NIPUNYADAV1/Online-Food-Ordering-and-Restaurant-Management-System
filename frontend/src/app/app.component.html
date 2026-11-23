@@ -1,0 +1,257 @@
+<header class="topbar">
+  <a class="brand" href="#" (click)="activeView = 'menu'; $event.preventDefault()">
+    <span class="brand-mark">g</span>
+    <span>goodfood<span class="brand-dot">.</span></span>
+  </a>
+  <nav class="main-nav" aria-label="Main navigation">
+    <button class="nav-link" [class.active]="activeView === 'menu'" (click)="activeView = 'menu'">Explore</button>
+    @if (user?.role === 'Customer') {
+      <button class="nav-link" [class.active]="activeView === 'orders'" (click)="activeView = 'orders'">My orders</button>
+    }
+    @if (user && user.role !== 'Customer') {
+      <button class="nav-link" [class.active]="activeView === 'manage'" (click)="activeView = 'manage'">Manage</button>
+    }
+  </nav>
+  <div class="top-actions">
+    @if (user?.role === 'Customer') {
+      <button class="cart-button" (click)="activeView = 'cart'" aria-label="Open shopping cart">
+        <span aria-hidden="true">▱</span> Cart <span class="cart-count">{{ cartCount }}</span>
+      </button>
+    }
+    @if (user) {
+      <span class="user-chip">{{ user.name }} <span class="role-label">{{ user.role }}</span></span>
+      <button class="text-button" (click)="logout()">Sign out</button>
+    } @else {
+      <a class="text-button" href="#account">Sign in</a>
+    }
+  </div>
+</header>
+
+<main>
+  @if (message) {
+    <div class="notice success" role="status"><span>✓</span> {{ message }} <button (click)="message = ''" aria-label="Dismiss">×</button></div>
+  }
+  @if (error) {
+    <div class="notice error" role="alert"><span>!</span> {{ error }} <button (click)="error = ''" aria-label="Dismiss">×</button></div>
+  }
+
+  @if (activeView === 'confirmation' && confirmedOrder; as order) {
+    <section class="confirmation-page">
+      <div class="confirmation-confetti confetti-one">✳</div>
+      <div class="confirmation-confetti confetti-two">✦</div>
+      <div class="confirmation-card">
+        <div class="confirmation-check" aria-hidden="true"><span>✓</span></div>
+        <p class="eyebrow">A LITTLE SOMETHING TO CELEBRATE</p>
+        <h1>Congratulations!<br><span>Your order is confirmed.</span></h1>
+        <p class="confirmation-intro">The kitchen is getting started. Thanks for making goodfood part of your day.</p>
+        <div class="confirmation-order-number">
+          <span>ORDER NUMBER</span>
+          <strong>#{{ order.id }}</strong>
+          <span class="status-pill paid">{{ order.status }}</span>
+        </div>
+        <div class="confirmation-items">
+          <p class="eyebrow">IN YOUR ORDER</p>
+          @for (item of order.items; track item.foodItemId) {
+            <div class="confirmation-item">
+              <span><b>{{ item.quantity }} ×</b> {{ item.name }}</span>
+              <strong>{{ item.unitPrice * item.quantity | currency:'INR':'symbol':'1.2-2' }}</strong>
+            </div>
+          }
+          <div class="confirmation-total"><span>Total paid</span><strong>{{ order.totalAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+        </div>
+        <div class="confirmation-actions">
+          <button class="primary-button" (click)="trackConfirmedOrder()">Track your order</button>
+          <button class="confirmation-secondary" (click)="activeView = 'menu'">Explore more good food</button>
+        </div>
+        <p class="confirmation-thanks">A confirmation is saved in <button (click)="trackConfirmedOrder()">My orders</button>.</p>
+      </div>
+    </section>
+  }
+
+  @if (activeView === 'menu') {
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="spark">✳</span> GOOD FOOD, GOOD MOOD</div>
+        <h1>Your next<br><span>great meal</span><br>is right here.</h1>
+        <p>Discover neighborhood favorites and get the good stuff delivered to your door.</p>
+        <a class="hero-cta" href="#discover">Find your food <span>↓</span></a>
+      </div>
+      <div class="hero-art" aria-label="Fresh food bowl illustration">
+        <div class="sun-shape"></div>
+        <span class="art-leaf leaf-one">✦</span><span class="art-leaf leaf-two">✦</span>
+        <div class="food-plate"><div class="bowl-rim"><div class="bowl-fill">
+          <span class="ingredient tomato">●</span><span class="ingredient greens">✿</span>
+          <span class="ingredient avocado">◖</span><span class="ingredient grain">••</span>
+          <span class="ingredient onion">◎</span><span class="ingredient herb">✣</span>
+        </div></div></div>
+        <div class="art-caption"><span class="caption-icon">✳</span><span>Made fresh.<br><b>Delivered happy.</b></span></div>
+      </div>
+      <div class="hero-bottom"><span>01 — HANDPICKED NEAR YOU</span><span>SCROLL TO EXPLORE ↓</span></div>
+    </section>
+
+    <section id="discover" class="discover section-wrap">
+      <div class="section-heading">
+        <div><p class="eyebrow">A LITTLE SOMETHING FOR EVERYONE</p><h2>Find your <span>favorite.</span></h2></div>
+        <p class="section-note">Good things are cooking nearby.<br>Take a look around.</p>
+      </div>
+      <div class="filters">
+        <label class="search-box"><span aria-hidden="true">⌕</span>
+          <input [(ngModel)]="search" (keyup.enter)="applyFilters()" placeholder="Try “ramen” or “pizza”" aria-label="Search food or restaurants">
+          <button (click)="applyFilters()">Search</button>
+        </label>
+        <select [(ngModel)]="category" (change)="applyFilters()" aria-label="Filter by food category">
+          <option value="">All categories</option>
+          @for (itemCategory of categories; track itemCategory) {
+            <option [value]="itemCategory">{{ itemCategory }}</option>
+          }
+        </select>
+      </div>
+      @if (restaurants.length === 0) {
+        <div class="empty-state"><span>⌕</span><h3>No matches just yet</h3><p>Try a different search or category.</p></div>
+      }
+      @for (restaurant of restaurants; track restaurant.id) {
+        <article class="restaurant-block">
+          <div class="restaurant-head">
+            @if (restaurant.imageUrl) {
+              <img class="restaurant-photo" [src]="restaurant.imageUrl" [alt]="restaurant.name">
+            } @else {
+              <div class="restaurant-photo restaurant-placeholder">{{ restaurant.name.slice(0, 1) }}</div>
+            }
+            <div class="restaurant-details">
+              <div class="restaurant-label">NEIGHBORHOOD FAVORITE</div>
+              <h3>{{ restaurant.name }}</h3>
+              <p>{{ restaurant.cuisine }} <span>·</span> {{ restaurant.address }}</p>
+              @if (restaurant.description) { <p class="restaurant-description">{{ restaurant.description }}</p> }
+            </div>
+            <span class="open-label"><i></i> OPEN</span>
+          </div>
+          <div class="food-grid">
+            @for (food of restaurant.foodItems; track food.id) {
+              <article class="food-card">
+                @if (food.imageUrl) {
+                  <img class="food-image" [src]="food.imageUrl" [alt]="food.name">
+                } @else {
+                  <div class="food-image food-placeholder"><span>✳</span></div>
+                }
+                <div class="food-info">
+                  <div class="food-category">{{ food.category }}</div>
+                  <h4>{{ food.name }}</h4>
+                  <p>{{ food.description || 'Made fresh with ingredients we love.' }}</p>
+                  <div class="food-footer"><strong>{{ food.price | currency:'INR':'symbol':'1.2-2' }}</strong>
+                    <button class="add-button" (click)="addToCart(food)" [attr.aria-label]="'Add ' + food.name + ' to cart'">+</button>
+                  </div>
+                </div>
+              </article>
+            } @empty {
+              <p class="muted">No menu items match these filters.</p>
+            }
+          </div>
+        </article>
+      }
+    </section>
+  }
+
+  @if (!user) {
+    <section id="account" class="account-section section-wrap">
+      <div class="account-copy"><p class="eyebrow">YOUR TABLE IS WAITING</p><h2>Good food is<br><span>better together.</span></h2><p>Create an account to save your cart and follow every order.</p></div>
+      <form class="account-card" (ngSubmit)="loginOrRegister()">
+        <div class="form-tabs">
+          <button type="button" [class.selected]="authMode === 'login'" (click)="authMode = 'login'">Sign in</button>
+          <button type="button" [class.selected]="authMode === 'register'" (click)="authMode = 'register'">Create account</button>
+        </div>
+        @if (authMode === 'register') {
+          <label>Your name<input name="name" [(ngModel)]="authForm.name" required minlength="2" autocomplete="name"></label>
+        }
+        <label>Email address<input name="email" type="email" [(ngModel)]="authForm.email" required autocomplete="email"></label>
+        <label>Password<input name="password" type="password" [(ngModel)]="authForm.password" required minlength="8" autocomplete="current-password"></label>
+        <button class="primary-button full-button" type="submit" [disabled]="busy">{{ busy ? 'Please wait…' : authMode === 'login' ? 'Sign in' : 'Create my account' }}</button>
+        <p class="form-hint">Passwords must be at least 8 characters.</p>
+      </form>
+    </section>
+  }
+
+  @if (activeView === 'cart') {
+    <section class="page-section section-wrap">
+      <div class="page-title"><div><p class="eyebrow">GOOD CHOICES</p><h2>Your <span>basket.</span></h2></div><button class="text-button" (click)="activeView = 'menu'">← Keep exploring</button></div>
+      @if (cart.items.length === 0) {
+        <div class="empty-state"><span>▱</span><h3>Your basket is taking a breather</h3><p>Add something delicious from a restaurant nearby.</p><button class="primary-button" (click)="activeView = 'menu'">Explore menu</button></div>
+      } @else {
+        <div class="cart-layout">
+          <div class="cart-list">
+            @for (item of cart.items; track item.id) {
+              <article class="cart-row">
+                <div class="cart-food-icon">✳</div><div class="cart-food"><h3>{{ item.name }}</h3><p>{{ item.restaurantName }}</p><strong>{{ item.unitPrice | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+                <div class="quantity-control"><button (click)="changeQuantity(item.id, item.quantity - 1)" aria-label="Decrease quantity">−</button><span>{{ item.quantity }}</span><button (click)="changeQuantity(item.id, item.quantity + 1)" aria-label="Increase quantity">+</button></div>
+                <strong class="line-total">{{ item.lineTotal | currency:'INR':'symbol':'1.2-2' }}</strong><button class="remove-button" (click)="removeFromCart(item.id)" aria-label="Remove item">×</button>
+              </article>
+            }
+          </div>
+          <aside class="summary-card"><p class="eyebrow">YOUR ORDER</p><h3>Almost there.</h3><div class="summary-line"><span>Subtotal</span><strong>{{ cart.total | currency:'INR':'symbol':'1.2-2' }}</strong></div><div class="summary-line"><span>Delivery</span><span>Calculated at checkout</span></div><div class="summary-total"><span>Total</span><strong>{{ cart.total | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+            <button class="primary-button full-button" [disabled]="busy" (click)="checkout()">{{ busy ? 'Preparing secure checkout…' : 'Pay securely' }}</button>
+            <p class="secure-note">Test-mode checkout secured by Razorpay.</p><button class="clear-cart" (click)="clearCart()">Clear basket</button>
+          </aside>
+        </div>
+      }
+    </section>
+  }
+
+  @if (activeView === 'orders') {
+    <section class="page-section section-wrap">
+      <div class="page-title"><div><p class="eyebrow">FROM OUR KITCHEN TO YOU</p><h2>Your <span>orders.</span></h2></div><button class="text-button" (click)="refreshOrders()">↻ Refresh</button></div>
+      @if (orders.length === 0) {
+        <div class="empty-state"><span>✳</span><h3>Your next favorite is out there</h3><p>When you place an order, you can track it right here.</p><button class="primary-button" (click)="activeView = 'menu'">Browse restaurants</button></div>
+      }
+      <div class="order-grid">
+        @for (order of orders; track order.id) {
+          <article class="order-card"><div class="order-head"><div><p class="eyebrow">ORDER #{{ order.id }}</p><h3>{{ order.status }}</h3></div><span class="status-pill" [class.paid]="order.paymentStatus === 'Paid'">{{ order.paymentStatus }}</span></div>
+            <p class="order-date">{{ order.createdAt | date:'medium' }}</p>
+            <div class="order-items">@for (item of order.items; track item.foodItemId) { <div><span>{{ item.quantity }} × {{ item.name }}</span><strong>{{ item.unitPrice * item.quantity | currency:'INR':'symbol':'1.2-2' }}</strong></div> }</div>
+            <div class="order-total"><span>Total</span><strong>{{ order.totalAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+          </article>
+        }
+      </div>
+    </section>
+  }
+
+  @if (activeView === 'manage') {
+    <section class="page-section section-wrap">
+      <div class="page-title"><div><p class="eyebrow">{{ isAdmin ? 'CONTROL THE GOOD STUFF' : 'YOUR KITCHEN, YOUR CALL' }}</p><h2>{{ isAdmin ? 'Admin' : 'Restaurant' }} <span>desk.</span></h2></div><button class="text-button" (click)="refreshOrders()">↻ Refresh orders</button></div>
+      <h3 class="subheading">Incoming orders <span class="order-count">{{ orders.length }}</span></h3>
+      @if (orders.length === 0) { <p class="muted management-empty">No orders to manage right now.</p> }
+      <div class="order-grid management-orders">
+        @for (order of orders; track order.id) {
+          <article class="order-card"><div class="order-head"><div><p class="eyebrow">ORDER #{{ order.id }}</p><h3>{{ order.status }}</h3></div><span class="status-pill paid">{{ order.paymentStatus }}</span></div>
+            <div class="order-items">@for (item of order.items; track item.foodItemId) { <div><span>{{ item.quantity }} × {{ item.name }}</span><strong>{{ item.unitPrice * item.quantity | currency:'INR':'symbol':'1.2-2' }}</strong></div> }</div>
+            <div class="order-total"><span>Total</span><strong>{{ order.totalAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+            @if (nextStatusFor(order.status); as next) { <button class="primary-button full-button" (click)="advanceOrder(order)">Mark {{ next }}</button> }
+          </article>
+        }
+      </div>
+
+      @if (isAdmin) {
+        <div class="admin-tools">
+          <article class="management-card"><p class="eyebrow">TEAM</p><h3>Add a restaurant owner</h3>
+            <form (ngSubmit)="createOwner()"><label>Owner name<input name="ownerName" [(ngModel)]="ownerForm.name" required minlength="2" maxlength="100"></label><label>Email<input name="ownerEmail" type="email" [(ngModel)]="ownerForm.email" required maxlength="320"></label><label>Temporary password<input name="ownerPassword" type="password" [(ngModel)]="ownerForm.password" required minlength="8" maxlength="100"></label><p class="form-hint owner-form-hint">If this email already has a customer account, it will be promoted and its password reset to this temporary password.</p><button class="primary-button" type="submit">Create owner account</button></form>
+          </article>
+          <article class="management-card"><p class="eyebrow">{{ editingRestaurantId ? 'UPDATE PLACE' : 'NEW PLACE' }}</p><h3>{{ editingRestaurantId ? 'Edit restaurant' : 'Add a restaurant' }}</h3>
+            <form (ngSubmit)="createRestaurant()"><label>Restaurant name<input name="restaurantName" [(ngModel)]="restaurantForm.name" required></label><label>Cuisine<input name="cuisine" [(ngModel)]="restaurantForm.cuisine" required></label><label>Address<input name="address" [(ngModel)]="restaurantForm.address" required></label><label>Description<input name="description" [(ngModel)]="restaurantForm.description"></label><label>Image URL<input name="restaurantImage" type="url" [(ngModel)]="restaurantForm.imageUrl"></label><button class="primary-button" type="submit">{{ editingRestaurantId ? 'Save changes' : 'Add restaurant' }}</button>@if (editingRestaurantId) { <button class="text-button cancel-edit" type="button" (click)="cancelRestaurantEdit()">Cancel</button> }</form>
+          </article>
+          <article class="management-card"><p class="eyebrow">MENU</p><h3>{{ editingFoodItemId ? 'Edit menu item' : 'Add a food item' }}</h3>
+            <form (ngSubmit)="createFoodItem()"><label>Restaurant<select name="selectedRestaurant" [(ngModel)]="selectedRestaurantId" required [disabled]="editingFoodItemId > 0"><option [ngValue]="0" disabled>Choose restaurant</option>@for (restaurant of restaurants; track restaurant.id) { <option [ngValue]="restaurant.id">{{ restaurant.name }}</option> }</select></label><label>Item name<input name="foodName" [(ngModel)]="foodForm.name" required></label><label>Category<input name="foodCategory" [(ngModel)]="foodForm.category" required></label><label>Price (INR)<input name="foodPrice" type="number" min="0.01" step="0.01" [(ngModel)]="foodForm.price" required></label><label>Description<input name="foodDescription" [(ngModel)]="foodForm.description"></label><label>Image URL<input name="foodImage" type="url" [(ngModel)]="foodForm.imageUrl"></label><label>Availability<select name="foodAvailability" [(ngModel)]="foodForm.isAvailable"><option [ngValue]="true">Available</option><option [ngValue]="false">Unavailable</option></select></label><button class="primary-button" type="submit">{{ editingFoodItemId ? 'Save changes' : 'Add menu item' }}</button>@if (editingFoodItemId) { <button class="text-button cancel-edit" type="button" (click)="cancelFoodEdit()">Cancel</button> }</form>
+          </article>
+        </div>
+        <div class="management-card restaurant-admin-list"><p class="eyebrow">YOUR PLACES</p><h3>Restaurant owners & menus</h3>
+          @for (restaurant of restaurants; track restaurant.id) {
+            <div class="admin-restaurant-row"><div><b>{{ restaurant.name }}</b><p>{{ restaurant.foodItems.length }} menu items</p></div>
+              <select [ngModel]="ownerIdByRestaurant[restaurant.id] ?? 0" (ngModelChange)="ownerIdByRestaurant[restaurant.id] = $event" [name]="'owner-' + restaurant.id" [attr.aria-label]="'Choose owner for ' + restaurant.name"><option [ngValue]="0">Assign owner…</option>@for (owner of owners; track owner.id) { <option [ngValue]="owner.id" [disabled]="ownerAssignedElsewhere(owner.id, restaurant.id)">{{ owner.name }}{{ owner.assignment && owner.assignment.restaurantId !== restaurant.id ? ' — assigned to ' + owner.assignment.restaurantName : '' }}</option> }</select>
+              @if (ownerIdByRestaurant[restaurant.id]) { <button class="small-action" (click)="assignOwner(restaurant.id)">Assign</button><button class="small-action danger-action" (click)="unassignOwner(restaurant.id)">Unassign</button> } @else { <button class="small-action" (click)="assignOwner(restaurant.id)">Assign</button> }<button class="small-action" (click)="editRestaurant(restaurant)">Edit</button><button class="small-action danger-action" (click)="deactivateRestaurant(restaurant.id)">Deactivate</button>
+            </div>
+            @for (food of restaurant.foodItems; track food.id) { <div class="admin-food-row"><span>{{ food.name }} · {{ food.price | currency:'INR':'symbol':'1.2-2' }}</span><span class="food-admin-actions"><button class="small-action" (click)="editFoodItem(food)">Edit</button><button class="remove-button" (click)="removeFoodItem(food.id)" [attr.aria-label]="'Remove ' + food.name">×</button></span></div> }
+          }
+        </div>
+      }
+    </section>
+  }
+</main>
+
+<footer class="footer"><a class="brand" href="#"><span class="brand-mark">g</span><span>goodfood<span class="brand-dot">.</span></span></a><p>Made for good appetites and better days.</p><span>© GOODFOOD 2026</span></footer>
