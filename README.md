@@ -66,10 +66,6 @@ Open `http://localhost:4200`. The Angular app expects the API at `http://localho
 
 EF Core creates the `Users`, `Restaurants`, `FoodItems`, `Cart`, `CartItems`, `Orders`, and `OrderItems` tables on first run. For an existing schema or production deployment, replace `EnsureCreated` with versioned EF Core migrations before applying schema changes.
 
-## Important
-
-The Razorpay key ID is returned to the Angular client for checkout; the key secret remains on the API. Never use live billing credentials in this test-mode demo or commit secrets to source control. Supply a strong JWT signing key (at least 32 UTF-8 bytes) through user-secrets or environment configuration.
-=======
 # Online Food Ordering and Restaurant Management System
 
 A Zomato-inspired full-stack web application that allows customers to explore restaurants, browse food menus, manage their shopping carts, and place food orders. The platform also provides restaurant management features for owners and administrative controls for administrators.
